@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, Keyboard, Sparkles, Star, Settings, Swords } from 'lucide-react';
+import { LayoutDashboard, Keyboard, Sparkles, Star, Settings, Swords, User } from 'lucide-react';
 import Dashboard from './components/Dashboard';
 import TypingTutor from './components/TypingTutor';
 import BalloonGame from './components/BalloonGame';
