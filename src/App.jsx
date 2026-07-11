@@ -6,12 +6,19 @@ import BalloonGame from './components/BalloonGame';
 import FruitNinja from './components/FruitNinja';
 import AdminPanel from './components/AdminPanel';
 import ProfilePicker from './components/ProfilePicker';
+import UserProfile from './components/UserProfile';
 import { audio } from './utils/audio';
 
 export default function App() {
   const [globalState, setGlobalState] = useState(null);
   const [localUserId, setLocalUserId] = useState(() => localStorage.getItem('localActiveUserId'));
+  const [localKeyboardSound, setLocalKeyboardSound] = useState(() => localStorage.getItem('keyboardSound') || 'default');
   const [activeTab, setActiveTab] = useState('dashboard');
+
+  // Initialize sound on mount
+  useEffect(() => {
+    audio.setSoundProfile(localKeyboardSound);
+  }, []);
 
   // Load progress from backend on mount
   useEffect(() => {
@@ -19,9 +26,6 @@ export default function App() {
       .then(res => res.json())
       .then(data => {
         setGlobalState(data);
-        if (data.settings?.keyboardSound) {
-          audio.setSoundProfile(data.settings.keyboardSound);
-        }
       })
       .catch(err => {
         console.error('Error fetching progress:', err);
@@ -33,10 +37,6 @@ export default function App() {
     setGlobalState(prev => {
       if (!prev) return prev;
       const updated = { ...prev, ...newFields };
-      
-      if (newFields.settings?.keyboardSound) {
-        audio.setSoundProfile(newFields.settings.keyboardSound);
-      }
       
       // Post changes asynchronously
       fetch('/api/progress', {
@@ -206,16 +206,32 @@ export default function App() {
           </button>
 
           <button
+            onClick={() => handleTabChange('profile')}
+            className={`kids-button ${activeTab === 'profile' ? 'btn-blue' : ''}`}
+            style={{
+              background: activeTab === 'profile' ? undefined : '#ffffff',
+              color: activeTab === 'profile' ? undefined : '#4f46e5',
+              border: activeTab === 'profile' ? undefined : '3px solid #c7d2fe',
+              boxShadow: activeTab === 'profile' ? undefined : '0 4px 0 #c7d2fe'
+            }}
+          >
+            <User size={20} /> User Profile
+          </button>
+
+          <button
             onClick={() => handleTabChange('admin')}
             className={`kids-button ${activeTab === 'admin' ? 'btn-yellow' : ''}`}
             style={{
               background: activeTab === 'admin' ? undefined : '#ffffff',
               color: activeTab === 'admin' ? undefined : '#475569',
               border: activeTab === 'admin' ? undefined : '3px solid #cbd5e1',
-              boxShadow: activeTab === 'admin' ? undefined : '0 4px 0 #cbd5e1'
+              boxShadow: activeTab === 'admin' ? undefined : '0 4px 0 #cbd5e1',
+              padding: '0.75rem', // Make it squarish
+              borderRadius: '50%' // Make it a circle
             }}
+            title="Admin Panel"
           >
-            <Settings size={20} /> Admin
+            <Settings size={20} />
           </button>
 
         </nav>
@@ -252,6 +268,17 @@ export default function App() {
         )}
         {activeTab === 'fruit-ninja' && (
           <FruitNinja progress={progress} updateProgress={updateProgress} />
+        )}
+        {activeTab === 'profile' && (
+          <UserProfile 
+            user={progress} 
+            localKeyboardSound={localKeyboardSound}
+            setLocalKeyboardSound={setLocalKeyboardSound}
+            onSwitchProfile={() => {
+              localStorage.removeItem('localActiveUserId');
+              setLocalUserId(null);
+            }}
+          />
         )}
         {activeTab === 'admin' && (
           <AdminPanel 

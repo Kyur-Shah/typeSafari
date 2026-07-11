@@ -40,6 +40,12 @@ export default function AdminPanel({ globalState, updateGlobalState, localUserId
       return;
     }
     
+    const pwd = prompt("Enter Admin Password to delete this profile:");
+    if (pwd !== 'p@r!&khush4521') {
+      alert("Incorrect password.");
+      return;
+    }
+
     if (window.confirm("Are you sure you want to delete this profile? This cannot be undone.")) {
       const newUsers = { ...globalState.users };
       delete newUsers[userId];
@@ -58,6 +64,12 @@ export default function AdminPanel({ globalState, updateGlobalState, localUserId
   };
 
   const handleResetCounters = (userId) => {
+    const pwd = prompt("Enter Admin Password to reset this profile:");
+    if (pwd !== 'p@r!&khush4521') {
+      alert("Incorrect password.");
+      return;
+    }
+
     if (window.confirm("Are you sure you want to reset this profile's progress to zero?")) {
       const userToReset = globalState.users[userId];
       const resetUser = {
@@ -78,21 +90,6 @@ export default function AdminPanel({ globalState, updateGlobalState, localUserId
     }
   };
 
-  const handleSoundChange = (e) => {
-    const newSound = e.target.value;
-    updateGlobalState({
-      settings: {
-        ...globalState.settings,
-        keyboardSound: newSound
-      }
-    });
-    // Immediately play sample sound
-    setTimeout(() => {
-      audio.setSoundProfile(newSound);
-      audio.playClick();
-    }, 50);
-  };
-
   const handleDiagnosticsToggle = (e) => {
     updateGlobalState({
       settings: {
@@ -108,25 +105,8 @@ export default function AdminPanel({ globalState, updateGlobalState, localUserId
       {/* Settings Section */}
       <div className="kids-card" style={{ borderColor: '#d8b4fe', boxShadow: '0 8px 0px #c084fc' }}>
         <h2 style={{ fontSize: '1.8rem', color: '#7e22ce', display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
-          <Settings size={28} /> Game Settings
+          <Settings size={28} /> Global Game Settings
         </h2>
-        
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', background: '#faf5ff', borderRadius: '16px', border: '2px solid #e9d5ff' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <Volume2 color="#9333ea" />
-            <span style={{ fontSize: '1.1rem', color: '#6b21a8', fontWeight: 'bold' }}>Keyboard Key Press Sound</span>
-          </div>
-          
-          <select 
-            className="kids-input" 
-            style={{ width: 'auto', minWidth: '200px', cursor: 'pointer' }}
-            value={globalState.settings?.keyboardSound || 'default'}
-            onChange={handleSoundChange}
-          >
-            <option value="default">Standard Soft Click</option>
-            <option value="mechanical">Mechanical Switch</option>
-          </select>
-        </div>
 
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '1rem', background: '#faf5ff', borderRadius: '16px', border: '2px solid #e9d5ff', marginTop: '1rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -176,11 +156,6 @@ export default function AdminPanel({ globalState, updateGlobalState, localUserId
                 </div>
                 
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  {isActive && onSwitchProfile && (
-                    <button className="kids-button btn-blue" onClick={onSwitchProfile} style={{ padding: '0.5rem 1rem' }} title="Log out and return to Profile Picker">
-                      Log Out
-                    </button>
-                  )}
                   <button className="kids-button btn-yellow" onClick={() => handleResetCounters(user.id)} title="Reset Progress" style={{ padding: '0.5rem 1rem' }}>
                     <RotateCcw size={18} />
                   </button>
