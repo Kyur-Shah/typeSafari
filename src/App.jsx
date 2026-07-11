@@ -5,10 +5,12 @@ import TypingTutor from './components/TypingTutor';
 import BalloonGame from './components/BalloonGame';
 import FruitNinja from './components/FruitNinja';
 import AdminPanel from './components/AdminPanel';
+import ProfilePicker from './components/ProfilePicker';
 import { audio } from './utils/audio';
 
 export default function App() {
   const [globalState, setGlobalState] = useState(null);
+  const [localUserId, setLocalUserId] = useState(() => localStorage.getItem('localActiveUserId'));
   const [activeTab, setActiveTab] = useState('dashboard');
 
   // Load progress from backend on mount
@@ -52,9 +54,9 @@ export default function App() {
   // Helper for components to only update the active user's progress
   const updateProgress = (newUserFields) => {
     setGlobalState(prev => {
-      if (!prev || !prev.activeUserId) return prev;
+      if (!prev || !localUserId) return prev;
       
-      const userId = prev.activeUserId;
+      const userId = localUserId;
       const currentUser = prev.users[userId];
       const updatedUser = { ...currentUser, ...newUserFields };
       
@@ -82,7 +84,7 @@ export default function App() {
     setActiveTab(tabId);
   };
 
-  if (!globalState || !globalState.users || !globalState.activeUserId) {
+  if (!globalState || !globalState.users) {
     return (
       <div style={{
         display: 'flex', flexDirection: 'column', alignItems: 'center',
@@ -95,7 +97,34 @@ export default function App() {
     );
   }
 
-  const progress = globalState.users[globalState.activeUserId];
+  // Ensure selected local user actually exists in the db
+  const isLocalUserValid = localUserId && globalState.users[localUserId];
+
+  if (!isLocalUserValid) {
+    return (
+      <ProfilePicker 
+        globalState={globalState} 
+        onSelectProfile={(id) => {
+          localStorage.setItem('localActiveUserId', id);
+          setLocalUserId(id);
+        }}
+        onCreateProfile={() => {
+          // If they want to create a new profile, we just route them to the admin panel
+          // but we need them to bypass the picker first. So we can just set localUserId to a temp flag?
+          // Actually, it's easier to just pick the first user and jump to admin tab, OR just have a minimal modal.
+          // For now, we'll pick the first user (if exists) and jump to Admin.
+          const firstUser = Object.values(globalState.users)[0];
+          if (firstUser) {
+            localStorage.setItem('localActiveUserId', firstUser.id);
+            setLocalUserId(firstUser.id);
+            setActiveTab('admin');
+          }
+        }}
+      />
+    );
+  }
+
+  const progress = globalState.users[localUserId];
 
   return (
     <div className="app-container">
@@ -225,7 +254,15 @@ export default function App() {
           <FruitNinja progress={progress} updateProgress={updateProgress} />
         )}
         {activeTab === 'admin' && (
-          <AdminPanel globalState={globalState} updateGlobalState={updateGlobalState} />
+          <AdminPanel 
+            globalState={globalState} 
+            updateGlobalState={updateGlobalState} 
+            localUserId={localUserId}
+            onSwitchProfile={() => {
+              localStorage.removeItem('localActiveUserId');
+              setLocalUserId(null);
+            }}
+          />
         )}
       </main>
 

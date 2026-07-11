@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { User, UserPlus, Settings, Trash2, RotateCcw, Volume2, Terminal } from 'lucide-react';
 import { audio } from '../utils/audio';
 
-export default function AdminPanel({ globalState, updateGlobalState }) {
+export default function AdminPanel({ globalState, updateGlobalState, localUserId, onSwitchProfile }) {
   const [newUserName, setNewUserName] = useState('');
 
   if (!globalState || !globalState.users) return null;
@@ -28,16 +28,10 @@ export default function AdminPanel({ globalState, updateGlobalState }) {
     };
 
     updateGlobalState({
-      users: { ...globalState.users, [newId]: newUser },
-      activeUserId: newId // auto-switch to new user
+      users: { ...globalState.users, [newId]: newUser }
     });
     setNewUserName('');
     audio.playLevelUp();
-  };
-
-  const handleSwitchUser = (userId) => {
-    updateGlobalState({ activeUserId: userId });
-    audio.playClick();
   };
 
   const handleDeleteUser = (userId) => {
@@ -49,16 +43,16 @@ export default function AdminPanel({ globalState, updateGlobalState }) {
     if (window.confirm("Are you sure you want to delete this profile? This cannot be undone.")) {
       const newUsers = { ...globalState.users };
       delete newUsers[userId];
-      
-      let newActiveId = globalState.activeUserId;
-      if (globalState.activeUserId === userId) {
-        newActiveId = Object.keys(newUsers)[0];
-      }
 
       updateGlobalState({
-        users: newUsers,
-        activeUserId: newActiveId
+        users: newUsers
       });
+      
+      // If we deleted the currently logged-in user, force a logout
+      if (localUserId === userId && onSwitchProfile) {
+        onSwitchProfile();
+      }
+      
       audio.playIncorrect();
     }
   };
@@ -160,7 +154,7 @@ export default function AdminPanel({ globalState, updateGlobalState }) {
         {/* User List */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '2rem' }}>
           {usersList.map(user => {
-            const isActive = user.id === globalState.activeUserId;
+            const isActive = user.id === localUserId;
             return (
               <div key={user.id} style={{
                 display: 'flex',
@@ -182,9 +176,9 @@ export default function AdminPanel({ globalState, updateGlobalState }) {
                 </div>
                 
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  {!isActive && (
-                    <button className="kids-button btn-blue" onClick={() => handleSwitchUser(user.id)} style={{ padding: '0.5rem 1rem' }}>
-                      Play
+                  {isActive && onSwitchProfile && (
+                    <button className="kids-button btn-blue" onClick={onSwitchProfile} style={{ padding: '0.5rem 1rem' }} title="Log out and return to Profile Picker">
+                      Log Out
                     </button>
                   )}
                   <button className="kids-button btn-yellow" onClick={() => handleResetCounters(user.id)} title="Reset Progress" style={{ padding: '0.5rem 1rem' }}>
